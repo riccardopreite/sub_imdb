@@ -54,33 +54,34 @@ def run_sub_process(data, sub_process, save):
         pool.join()
 
 
-def add_entity(id):
-    if id not in entity_dict.values():
+def add_entity(entity_name):
+    if entity_name not in entity_dict.keys():
         key = str(len(entity_dict))
-
+        id = "IMDB"+key
         rel_dict = {
-            "entity_id":"IMDB"+key,
-            "tt_id":id
+            "entity_id":id, #IMDxxx
+            "tt_id":entity_name #ttconst
         }
         entity_list.append(rel_dict)
-        entity_dict[key] = id
+        entity_dict[entity_name] = id
+    
+    return entity_dict[entity_name]
 
 def add_relation(relation: str):
     if relation not in relation_dict.values():
             key = str(len(relation_dict))
             splitted = relation.split('\t')
             rel_dict = {
-                "tt_id":splitted[0],
+                "tt_id":entity_dict[splitted[0]], #IMDxxx not ttconst
                 "relation_id":splitted[1],
-                "attributes_id":splitted[2]
+                "attributes_id":entity_dict[splitted[2]] #IMDxxx not horror ecc
             }
             relation_list.append(rel_dict)
             relation_dict[key] = relation
 
 
-
 def save_entity(self):
-    print("Finisged entity",self)
+    print("Finished entity",self)
     create_region_entity()
 
 def sub_entity(pid, data):
@@ -91,8 +92,8 @@ def sub_entity(pid, data):
     end_relation = relation_code["endYear"]
 
     for index, row in data.iterrows():
-        if not (index % len(data)//4):
-            print("Actual index in",pid,"is",index)
+        if not (index % (len(data)//4)):
+            print("\t\tActual index in",pid,"is",index)
         genres_id: str = row["genres"]
         runtimeMinutes_id: int = row["runtimeMinutes"]
         endYear_id: str = row["endYear"]
@@ -101,25 +102,27 @@ def sub_entity(pid, data):
         if genres_id != "\\N":
             split = genres_id.split(",")
             for gen in split:
-                add_entity(gen)
-                relation_gen = tt_id + "\t" + gen_relation + "\t" + gen
+                gen_id = add_entity(gen)
+                relation_gen = tt_id + "\t" + gen_relation + "\t" + gen_id
                 add_relation(relation_gen)
 
         if runtimeMinutes_id != "\\N":
-            add_entity(runtimeMinutes_id)
-            relation_run = tt_id + "\t" + run_relation + "\t" + runtimeMinutes_id
+            run_id = add_entity(runtimeMinutes_id)
+            relation_run = tt_id + "\t" + run_relation + "\t" + run_id
             add_relation(relation_run)
 
         if endYear_id != "\\N":
-            add_entity(endYear_id)
-            relation_end = tt_id + "\t" + end_relation + "\t" + endYear_id
+            end_id = add_entity(endYear_id)
+            relation_end = tt_id + "\t" + end_relation + "\t" + end_id
             add_relation(relation_end)
 
         if startYear_id != "\\N":
-            add_entity(startYear_id)
-            relation_start = tt_id + "\t" + start_relation + "\t" + startYear_id
+            start_id = add_entity(startYear_id)
+            relation_start = tt_id + "\t" + start_relation + "\t" + start_id
             add_relation(relation_start)
+
     print("\tFinished entity with pid",pid)
+
 def create_attributes_entity():
     attributes_file: DataFrame = pd.read_csv('basics.tsv',sep='\t')
     del attributes_file["titleType"]
@@ -144,15 +147,16 @@ def sub_region(pid, data):
     print("\tSpawned sub region with pid:",pid,"len:",len(data))
     relation_id: str = relation_code["region"]
     for index, row in data.iterrows():
-        if not (index % len(data)//4):
-            print("Actual index in",pid,"is",index)
+        if not (index % (len(data)//4)):
+            print("\t\tActual index in",pid,"is",index)
         region_id: str = row["region"]
         tt_id: str = row["titleId"]
         
         if region_id != "\\N":
-            add_entity(region_id)
-            relation_region = tt_id + "\t" + relation_id + "\t" + region_id
+            re_id = add_entity(region_id)
+            relation_region = tt_id + "\t" + relation_id + "\t" + re_id
             add_relation(relation_region)
+
     print("\tFinished region with pid",pid)
 
 def create_region_entity():
@@ -184,10 +188,6 @@ def create_film_entity(path: str):
     print('Readed ',path)
     tt_list: list = ttconst.readlines()
     run_sub_process(tt_list,sub_film,end_film)
-
-
-            
-
 
 
 def main():
