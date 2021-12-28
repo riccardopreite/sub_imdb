@@ -92,7 +92,7 @@ def sub_entity(pid, data):
     end_relation = relation_code["endYear"]
 
     for index, row in data.iterrows():
-        if not (index % 100000)
+        if not (index % 100000):
             print("Actual index in",pid,"is",index)
         genres_id: str = row["genres"]
         runtimeMinutes_id: int = row["runtimeMinutes"]
@@ -120,7 +120,7 @@ def sub_entity(pid, data):
             add_entity(startYear_id)
             relation_start = tt_id + "\t" + start_relation + "\t" + startYear_id
             add_relation(relation_start)
-
+    print("\tFinished entity with pid",pid)
 def create_attributes_entity():
     attributes_file: DataFrame = pd.read_csv('basics.tsv',sep='\t')
     del attributes_file["titleType"]
@@ -151,6 +151,7 @@ def sub_region(pid, data):
             add_entity(region_id)
             relation_region = tt_id + "\t" + relation_id + "\t" + region_id
             add_relation(relation_region)
+    print("\tFinished region with pid",pid)
 
 def create_region_entity():
     region_file: DataFrame = pd.read_csv('akas.tsv',sep='\t')
