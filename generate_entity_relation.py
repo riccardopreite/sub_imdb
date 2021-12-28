@@ -35,13 +35,21 @@ relation_list: list = list()
 entity_dict: dict = dict()
 entity_list: list = list()
 
+i = 0
+def get_id():
+    global i
+    i+=1
+    return i
+
 def run_sub_process(data, sub_process, save):
         step_size = len(data) // CORE_NUMBER
         pool = mp.Pool(mp.cpu_count())
-        sub_data = [ data[index:index+step_size] for index in range(0, len(data), step_size) ]
+        global i
+        i = 0
+        sub_data = [ (get_id(), data[index:index+step_size]) for index in range(0, len(data), step_size) ]
         print("Starting sub process:",sub_process)
         
-        pool.map_async(sub_process, sub_data, callback=save)
+        pool.starmap_async(sub_process, sub_data, callback=save)
         pool.close()
         pool.join()
 
@@ -76,14 +84,16 @@ def save_entity(self):
     entity_df = pd.DataFrame(entity_list)
     entity_df.to_csv("entity.tsv",sep="\t", index=False, header=False)
 
-def sub_entity(data):
-    print("\tSpawned sub entity with |data|=",len(data))
+def sub_entity(pid, data):
+    print("\tSpawned sub entity with pid:",pid,"len:",len(data))
     gen_relation = relation_code["genres"]
     run_relation = relation_code["runtimeMinutes"]
     start_relation = relation_code["startYear"]
     end_relation = relation_code["endYear"]
 
     for index, row in data.iterrows():
+        if not (index % 100000)
+            print("Actual index in",pid,"is",index)
         genres_id: str = row["genres"]
         runtimeMinutes_id: int = row["runtimeMinutes"]
         endYear_id: str = row["endYear"]
@@ -128,10 +138,12 @@ def save_region(self):
     relation_df = pd.DataFrame(relation_list)
     relation_df.to_csv("relation.tsv",sep="\t", index=False, header=False)
 
-def sub_region(data):
-    print("\tSpawned sub region with |data|=",len(data))
+def sub_region(pid, data):
+    print("\tSpawned sub region with pid:",pid,"len:",len(data))
     relation_id: str = relation_code["region"]
     for index, row in data.iterrows():
+        if not (index % 100000):
+            print("Actual index in",pid,"is",index)
         region_id: str = row["region"]
         tt_id: str = row["titleId"]
         
@@ -156,8 +168,8 @@ def create_region_entity():
 def end_film(self):
     print("Ended sub film",self)
 
-def sub_film(tt_list):
-    print("\tSpawned sub film")
+def sub_film(id, tt_list):
+    print("\tSpawned sub film with id",id)
     for url in tt_list:
         tt_id: str = url.replace("http://www.imdb.com/title/","").replace("/usercomments","")
 
