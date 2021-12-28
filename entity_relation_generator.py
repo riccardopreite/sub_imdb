@@ -53,12 +53,12 @@ def run_sub_process(data, sub_process):
 def add_entity(prefix, entity_name):
     with open("new_entity_try.tsv","a+") as fd:
         unique_code = (prefix+entity_name).replace("\n","")
-        fd.write(unique_code+"\t"+entity_name)
+        fd.write(unique_code+"\t"+entity_name+"\n")
         return unique_code
 
 def add_relation(relation: str):
      with open("new_relation_try.tsv","a+") as fd:
-         fd.write(relation)
+         fd.write(relation+"\n")
 
 def sub_entity(pid, data):
     print("\tSpawned sub entity with pid:",pid,"len:",len(data))
