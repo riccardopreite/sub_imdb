@@ -80,9 +80,8 @@ def add_relation(relation: str):
 
 
 def save_entity(self):
-    print("saving entity",self)
-    entity_df = pd.DataFrame(entity_list)
-    entity_df.to_csv("entity.tsv",sep="\t", index=False, header=False)
+    print("Finisged entity",self)
+    create_region_entity()
 
 def sub_entity(pid, data):
     print("\tSpawned sub entity with pid:",pid,"len:",len(data))
@@ -92,7 +91,7 @@ def sub_entity(pid, data):
     end_relation = relation_code["endYear"]
 
     for index, row in data.iterrows():
-        if not (index % 100000):
+        if not (index % len(data)//4):
             print("Actual index in",pid,"is",index)
         genres_id: str = row["genres"]
         runtimeMinutes_id: int = row["runtimeMinutes"]
@@ -134,15 +133,18 @@ def create_attributes_entity():
 
 
 def save_region(self):
-    print("Saving region",self)
+    print("Finished region. Saving files",self)
     relation_df = pd.DataFrame(relation_list)
     relation_df.to_csv("relation.tsv",sep="\t", index=False, header=False)
+    entity_df = pd.DataFrame(entity_list)
+    entity_df.to_csv("entity.tsv",sep="\t", index=False, header=False)
+    
 
 def sub_region(pid, data):
     print("\tSpawned sub region with pid:",pid,"len:",len(data))
     relation_id: str = relation_code["region"]
     for index, row in data.iterrows():
-        if not (index % 100000):
+        if not (index % len(data)//4):
             print("Actual index in",pid,"is",index)
         region_id: str = row["region"]
         tt_id: str = row["titleId"]
@@ -193,15 +195,8 @@ def main():
     create_film_entity("train/urls_neg.txt")
     create_film_entity("test/urls_pos.txt")
     create_film_entity("test/urls_neg.txt")
-
-    create_region_entity()
     create_attributes_entity()
+    
 
 if __name__ == "__main__":
     main()
-
-def merge_directory(neg_directory_path: str, pos_directory_path: str, neg_label: int, pos_label: int, output_file: str):
-    
-    only_neg_files: list = [f for f in listdir(neg_directory_path) if isfile(join(neg_directory_path, f))]
-    only_pos_files: list = [f for f in listdir(pos_directory_path) if isfile(join(pos_directory_path, f))]
-    data: str = ""  
