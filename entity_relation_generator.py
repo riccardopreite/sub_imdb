@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import multiprocessing as mp
 from pandas.core.frame import DataFrame
@@ -9,7 +10,7 @@ START_PREFIX = "start_"
 FILM_PREFIX = "film_"
 REGION_PREFIX = "region_"
 RUN_PREFIX = "run_"
-
+HALF = 'first'
 '''
 titleType?
 AKAS
@@ -51,13 +52,13 @@ def run_sub_process(data, sub_process):
         pool.join()
 
 def add_entity(prefix, entity_name):
-    with open("new_entity_try.tsv","a+") as fd:
+    with open(HALF+"_new_entity_try.tsv","a+") as fd:
         unique_code = (prefix+entity_name).replace("\n","")
         fd.write(unique_code+"\t"+entity_name+"\n")
         return unique_code
 
 def add_relation(relation: str):
-     with open("new_relation_try.tsv","a+") as fd:
+     with open(HALF+"_new_relation_try.tsv","a+") as fd:
          fd.write(relation+"\n")
 
 def sub_entity(pid, data):
@@ -72,11 +73,11 @@ def sub_entity(pid, data):
 
         if not (index % (len(data)//4)):
             print("\t\tActual index in",pid,"is",index)
-        genres_id: str = row["genres"]
-        runtimeMinutes_id: int = row["runtimeMinutes"]
-        endYear_id: str = row["endYear"]
-        startYear_id: str = row["startYear"]
-        tt_id: str = FILM_PREFIX + row["tconst"]
+        genres_id: str = str(row["genres"])
+        runtimeMinutes_id: int = str(row["runtimeMinutes"])
+        endYear_id: str = str(row["endYear"])
+        startYear_id: str = str(row["startYear"])
+        tt_id: str = FILM_PREFIX + str(row["tconst"])
 
         if genres_id != "\\N":
             split = genres_id.split(",")
@@ -108,8 +109,14 @@ def create_attributes_entity():
     del attributes_file["originalTitle"]
     del attributes_file["isAdult"]
     print('Readed basics.tsv')
-
-    run_sub_process(attributes_file, sub_entity)
+    if HALF == 'first':
+        start = 0
+        end = len(attributes_file)//2
+    elif HALF == 'second':
+        start = len(attributes_file)//2
+        end = len(attributes_file)
+    print("Running entity",HALF,"half with size:",str(len(attributes_file[start:end])))
+    run_sub_process(attributes_file[start:end], sub_entity)
 
 def sub_region(pid, data):
     print("\tSpawned sub region with pid:",pid,"len:",len(data))
@@ -119,8 +126,8 @@ def sub_region(pid, data):
         
         if not (index % (len(data)//4)):
             print("\t\tActual index in",pid,"is",index)
-        region_id: str = row["region"]
-        tt_id: str = FILM_PREFIX + row["titleId"]
+        region_id: str = str(row["region"])
+        tt_id: str = FILM_PREFIX + str(row["titleId"])
         
         if region_id != "\\N":
             re_id = add_entity(REGION_PREFIX, region_id)
@@ -138,8 +145,15 @@ def create_region_entity():
     del region_file["attributes"]
     del region_file["isOriginalTitle"]
     print('Readed akas.tsv')
+    if HALF == 'first':
+        start = 0
+        end = len(region_file)//2
+    elif HALF == 'second':
+        start = len(region_file)//2
+        end = len(region_file)
+        print("Running region",HALF,"half with size:",str(len(region_file[start:end])))
 
-    run_sub_process(region_file, sub_region)
+    run_sub_process(region_file[start:end], sub_region)
 
 def sub_film(id, tt_list):
     print("\tSpawned sub film with id",id)
@@ -150,18 +164,30 @@ def sub_film(id, tt_list):
             add_entity(FILM_PREFIX, tt_id)
 
 def create_film_entity(path: str):
+    global HALF
     ttconst = open(path,'r')
     print('Readed ',path)
     tt_list: list = ttconst.readlines()
-    run_sub_process(tt_list,sub_film)
+    if HALF == 'first':
+        start = 0
+        end = len(tt_list)//2
+    elif HALF == 'second':
+        start = len(tt_list)//2
+        end = len(tt_list)
+
+    print("Running film",HALF,"half with size:",str(len(tt_list[start:end])))
+    run_sub_process(tt_list[start:end],sub_film)
 
 
 def main():
+    global HALF
+    HALF = sys.argv[1]
     create_film_entity("train/urls_pos.txt")
     create_film_entity("train/urls_neg.txt")
     create_film_entity("test/urls_pos.txt")
     create_film_entity("test/urls_neg.txt")
     create_attributes_entity()
     create_region_entity()
+        
 if __name__ == "__main__":
     main()
