@@ -77,8 +77,8 @@ def sub_entity(pid, data):
         runtimeMinutes_id: int = str(row["runtimeMinutes"])
         endYear_id: str = str(row["endYear"])
         startYear_id: str = str(row["startYear"])
-        tt_id: str = FILM_PREFIX + str(row["tconst"])
-
+        id: str = str(row["titleId"])
+        tt_id = add_entity(FILM_PREFIX, id)
         if genres_id != "\\N":
             split = genres_id.split(",")
             for gen in split:
@@ -111,9 +111,15 @@ def create_attributes_entity():
     print('Readed basics.tsv')
     if HALF == 'first':
         start = 0
-        end = len(attributes_file)//2
+        end = len(attributes_file)//4
     elif HALF == 'second':
-        start = len(attributes_file)//2
+        start = len(attributes_file)//4
+        end = len(attributes_file)//4*2
+    elif HALF == 'third':
+        start = len(attributes_file)//4*2
+        end = len(attributes_file)//4*3
+    elif HALF == 'fourth':
+        start = len(attributes_file)//4*3
         end = len(attributes_file)
     print("Running entity",HALF,"half with size:",str(len(attributes_file[start:end])))
     run_sub_process(attributes_file[start:end], sub_entity)
@@ -127,10 +133,11 @@ def sub_region(pid, data):
         if not (index % (len(data)//4)):
             print("\t\tActual index in",pid,"is",index)
         region_id: str = str(row["region"])
-        tt_id: str = FILM_PREFIX + str(row["titleId"])
-        
+        id: str = str(row["titleId"])
+        tt_id = add_entity(FILM_PREFIX, id)
         if region_id != "\\N":
             re_id = add_entity(REGION_PREFIX, region_id)
+            
             relation_region = tt_id + "\t" + relation_id + "\t" + re_id
             add_relation(relation_region)
             
@@ -147,45 +154,24 @@ def create_region_entity():
     print('Readed akas.tsv')
     if HALF == 'first':
         start = 0
-        end = len(region_file)//2
+        end = len(region_file)//4
     elif HALF == 'second':
-        start = len(region_file)//2
+        start = len(region_file)//4
+        end = len(region_file)//4*2
+    elif HALF == 'thirs':
+        start = len(region_file)//4*2
+        end = len(region_file)//4*3
+    elif HALF == 'fourth':
+        start = len(region_file)//4*3
         end = len(region_file)
         print("Running region",HALF,"half with size:",str(len(region_file[start:end])))
 
     run_sub_process(region_file[start:end], sub_region)
 
-def sub_film(id, tt_list):
-    print("\tSpawned sub film with id",id)
-    for url in tt_list:
-        tt_id: str = url.replace("http://www.imdb.com/title/","").replace("/usercomments","")
-
-        if tt_id != "\\N":
-            add_entity(FILM_PREFIX, tt_id)
-
-def create_film_entity(path: str):
-    global HALF
-    ttconst = open(path,'r')
-    print('Readed ',path)
-    tt_list: list = ttconst.readlines()
-    if HALF == 'first':
-        start = 0
-        end = len(tt_list)//2
-    elif HALF == 'second':
-        start = len(tt_list)//2
-        end = len(tt_list)
-
-    print("Running film",HALF,"half with size:",str(len(tt_list[start:end])))
-    run_sub_process(tt_list[start:end],sub_film)
-
 
 def main():
     global HALF
     HALF = sys.argv[1]
-    create_film_entity("train/urls_pos.txt")
-    create_film_entity("train/urls_neg.txt")
-    create_film_entity("test/urls_pos.txt")
-    create_film_entity("test/urls_neg.txt")
     create_attributes_entity()
     create_region_entity()
         
