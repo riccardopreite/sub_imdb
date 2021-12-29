@@ -77,7 +77,7 @@ def sub_entity(pid, data):
         runtimeMinutes_id: int = str(row["runtimeMinutes"])
         endYear_id: str = str(row["endYear"])
         startYear_id: str = str(row["startYear"])
-        id: str = str(row["ttconst"])
+        id: str = str(row["tconst"])
         tt_id = add_entity(FILM_PREFIX, id)
         if genres_id != "\\N":
             split = genres_id.split(",")
