@@ -158,7 +158,7 @@ def create_region_entity():
     elif HALF == 'second':
         start = len(region_file)//4
         end = len(region_file)//4*2
-    elif HALF == 'thirs':
+    elif HALF == 'third':
         start = len(region_file)//4*2
         end = len(region_file)//4*3
     elif HALF == 'fourth':
