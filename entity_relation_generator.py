@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import multiprocessing as mp
 from pandas.core.frame import DataFrame
-
+from tqdm import tqdm
 CORE_NUMBER = mp.cpu_count()
 GENRE_PREFIX = "genre_"
 END_PREFIX = "end_"
@@ -10,7 +10,7 @@ START_PREFIX = "start_"
 FILM_PREFIX = "film_"
 REGION_PREFIX = "region_"
 RUN_PREFIX = "run_"
-HALF = 'first'
+HALF = 'film'
 '''
 titleType?
 AKAS
@@ -44,7 +44,10 @@ def run_sub_process(data, sub_process):
         pool = mp.Pool(mp.cpu_count())
         global i
         i = 0
-        sub_data = [ (get_id(), data[index:index+step_size]) for index in range(0, len(data), step_size) ]
+        sub_data = [ {"id":get_id(), "data":data[index:index+step_size]} for index in range(0, len(data), step_size) ]
+
+        for result in tqdm(pool.imap(func=sub_process, iterable=sub_data), total=len(data)):
+            pass
         print("Starting sub process:",sub_process)
         
         pool.starmap(sub_process, sub_data)
@@ -61,24 +64,31 @@ def add_relation(relation: str):
      with open(HALF+"_new_relation_try.tsv","a+") as fd:
          fd.write(relation+"\n")
 
-def sub_entity(pid, data):
-    print("\tSpawned sub entity with pid:",pid,"len:",len(data))
+# def sub_entity(pid, data):
+def sub_entity(dictionary):
+    pid = dictionary["id"]
+    full = dictionary["data"]
+    print("\tSpawned sub entity with pid:",pid,"len:",len(full))
     
     gen_relation = relation_code["genres"]
     run_relation = relation_code["runtimeMinutes"]
     start_relation = relation_code["startYear"]
     end_relation = relation_code["endYear"]
-
+    film_entity = open("film_entity.txt","r").readlines()
+    array = [row for index, row in full.iterrows() if row["tconst"] in film_entity]
+    data = pd.DataFrame(array)
+    print("\tSub entity with pid:",pid,"now has len:",len(data))
     for index, row in data.iterrows():
 
         if not (index % (len(data)//4)):
             print("\t\tActual index in",pid,"is",index)
+
         genres_id: str = str(row["genres"])
         runtimeMinutes_id: int = str(row["runtimeMinutes"])
         endYear_id: str = str(row["endYear"])
         startYear_id: str = str(row["startYear"])
-        id: str = str(row["tconst"])
-        tt_id = add_entity(FILM_PREFIX, id)
+        tt_id: str = FILM_PREFIX+str(row["tconst"])
+        # if tt_id in film_entity:
         if genres_id != "\\N":
             split = genres_id.split(",")
             for gen in split:
@@ -124,22 +134,35 @@ def create_attributes_entity():
     print("Running entity",HALF,"half with size:",str(len(attributes_file[start:end])))
     run_sub_process(attributes_file[start:end], sub_entity)
 
-def sub_region(pid, data):
-    print("\tSpawned sub region with pid:",pid,"len:",len(data))
+# def sub_region(pid, data):
+def sub_region(dictionary):
+    pid = dictionary["id"]
+    full = dictionary["data"]
+    print("\tSpawned sub region with pid:",pid,"len:",len(full))
     relation_id: str = relation_code["region"]
+    film_entity = open("film_entity.txt","r").readlines()
+    array = [row for index, row in full.iterrows() if row["titleId"] in film_entity]
+    data = pd.DataFrame(array)
+    print("\tSub region with pid:",pid,"now has len:",len(data))
 
     for index, row in data.iterrows():
-        
-        if not (index % (len(data)//4)):
-            print("\t\tActual index in",pid,"is",index)
         region_id: str = str(row["region"])
-        id: str = str(row["titleId"])
-        tt_id = add_entity(FILM_PREFIX, id)
-        if region_id != "\\N":
+        is_original: bool = bool(row["isOriginal"])
+        tt_id: str = FILM_PREFIX+str(row["titleId"])
+        if region_id != "\\N" and is_original:
             re_id = add_entity(REGION_PREFIX, region_id)
-            
             relation_region = tt_id + "\t" + relation_id + "\t" + re_id
             add_relation(relation_region)
+
+
+
+        # if not (index % (len(data)//4)):
+        #     print("\t\tActual index in",pid,"is",index)
+        # if tt_id in film_entity:
+        #     if region_id != "\\N" and is_original:
+        #         re_id = add_entity(REGION_PREFIX, region_id)
+        #         relation_region = tt_id + "\t" + relation_id + "\t" + re_id
+        #         add_relation(relation_region)
             
     print("\tFinished region with pid",pid)
 
@@ -150,7 +173,6 @@ def create_region_entity():
     del region_file["language"]
     del region_file["types"]
     del region_file["attributes"]
-    del region_file["isOriginalTitle"]
     print('Readed akas.tsv')
     if HALF == 'first':
         start = 0
@@ -188,18 +210,18 @@ def sub_film(id, tt_list):
             #add_entity(FILM_PREFIX, tt_id)
 
 def main():
-    create_film_entity("train/urls_pos.txt")
-    create_film_entity("train/urls_neg.txt")
-    create_film_entity("test/urls_pos.txt")
-    create_film_entity("test/urls_neg.txt")
-    entity = open("entity.txt","r").readlines()
-    entity_film = open("merged_entity.txt","w+")
-    film_set.update(entity)
-    entity_film.writelines(list(film_set))
     global HALF
-    #HALF = sys.argv[1]
-    #create_attributes_entity()
-    #create_region_entity()
+    HALF = sys.argv[1] if sys.argv[1] != None else "film"
+    if HALF == "film":
+        create_film_entity("train/urls_pos.txt")
+        create_film_entity("train/urls_neg.txt")
+        create_film_entity("test/urls_pos.txt")
+        create_film_entity("test/urls_neg.txt")
+        film_entity = open("film_entity.txt","w+")
+        film_entity.writelines(film_set)
+    else:
+        create_attributes_entity()
+        create_region_entity()
         
 if __name__ == "__main__":
     main()
