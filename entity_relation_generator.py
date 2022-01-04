@@ -44,6 +44,7 @@ def run_sub_process(data, sub_process):
         pool = mp.Pool(mp.cpu_count())
         global i
         i = 0
+        
         sub_data = [ {"id":get_id(), "data":data[index:index+step_size]} for index in range(0, len(data), step_size) ]
         print("Starting sub process:",sub_process)
         for result in tqdm(pool.imap(func=sub_process, iterable=sub_data), total=len(data)):
@@ -55,40 +56,32 @@ def run_sub_process(data, sub_process):
         pool.join()
 
 def add_entity(prefix, entity_name):
-    with open(HALF+"_new_entity_try.tsv","a+") as fd:
+    with open("akas_basic_entity.tsv","a+") as fd:
         unique_code = (prefix+entity_name).replace("\n","")
         fd.write(unique_code+"\t"+entity_name+"\n")
         return unique_code
 
 def add_relation(relation: str):
-     with open(HALF+"_new_relation_try.tsv","a+") as fd:
+     with open("akas_basic_relation_try.tsv","a+") as fd:
          fd.write(relation+"\n")
 
 # def sub_entity(pid, data):
 def sub_entity(dictionary):
     pid = dictionary["id"]
-    full = dictionary["data"]
-    print("\tSpawned sub entity with pid:",pid,"len:",len(full))
+    data = dictionary["data"]
+    print("\tSpawned sub entity with pid:",pid,"len:",len(data))
     
     gen_relation = relation_code["genres"]
     run_relation = relation_code["runtimeMinutes"]
     start_relation = relation_code["startYear"]
     end_relation = relation_code["endYear"]
-    film_entity = open("film_entity.txt","r").readlines()
-    array = [row for index, row in full.iterrows() if row["tconst"] in film_entity]
-    data = pd.DataFrame(array)
-    print("\tSub entity with pid:",pid,"now has len:",len(data))
+
     for index, row in data.iterrows():
-
-        if not (index % (len(data)//4)):
-            print("\t\tActual index in",pid,"is",index)
-
         genres_id: str = str(row["genres"])
         runtimeMinutes_id: int = str(row["runtimeMinutes"])
         endYear_id: str = str(row["endYear"])
         startYear_id: str = str(row["startYear"])
         tt_id: str = FILM_PREFIX+str(row["tconst"])
-        # if tt_id in film_entity:
         if genres_id != "\\N":
             split = genres_id.split(",")
             for gen in split:
@@ -120,7 +113,15 @@ def create_attributes_entity():
     del attributes_file["originalTitle"]
     del attributes_file["isAdult"]
     print('Readed basics.tsv')
-    run_sub_process(attributes_file, sub_entity)
+
+    print("Old attributes entity len",str(len(attributes_file)))
+
+    film_entity = open("film_entity.txt","r").readlines()
+    array = [row for index, row in attributes_file.iterrows() if row["tconst"] in film_entity]
+    reduced_attributes = pd.DataFrame(array)
+
+    print("New attributes entity len",str(len(reduced_attributes)))
+    run_sub_process(reduced_attributes, sub_entity)
 
 def create_attributes_entity_half():
     attributes_file: DataFrame = pd.read_csv('basics.tsv',sep='\t')
@@ -146,13 +147,9 @@ def create_attributes_entity_half():
 
 def sub_region(dictionary):
     pid = dictionary["id"]
-    full = dictionary["data"]
-    print("\tSpawned sub region with pid:",pid,"len:",len(full))
+    data = dictionary["data"]
+    print("\tSpawned sub region with pid:",pid,"len:",len(data))
     relation_id: str = relation_code["region"]
-    film_entity = open("film_entity.txt","r").readlines()
-    array = [row for index, row in full.iterrows() if row["titleId"] in film_entity]
-    data = pd.DataFrame(array)
-    print("\tSub region with pid:",pid,"now has len:",len(data))
 
     for index, row in data.iterrows():
         region_id: str = str(row["region"])
@@ -174,7 +171,14 @@ def create_region_entity():
     del region_file["types"]
     del region_file["attributes"]
     print('Readed akas.tsv')
-    run_sub_process(region_file, sub_region)
+    print("Old region entity len",str(len(region_file)))
+
+    film_entity = open("film_entity.txt","r").readlines()
+    array = [row for index, row in region_file.iterrows() if row["titleId"] in film_entity]
+    reduced_region = pd.DataFrame(array)
+
+    print("New region entity len",str(len(reduced_region)))
+    run_sub_process(reduced_region, sub_region)
 
 def create_region_entity_half():
     region_file: DataFrame = pd.read_csv('akas.tsv',sep='\t')
