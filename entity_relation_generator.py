@@ -45,12 +45,12 @@ def run_sub_process(data, sub_process):
         global i
         i = 0
         sub_data = [ {"id":get_id(), "data":data[index:index+step_size]} for index in range(0, len(data), step_size) ]
-
+        print("Starting sub process:",sub_process)
         for result in tqdm(pool.imap(func=sub_process, iterable=sub_data), total=len(data)):
             pass
-        print("Starting sub process:",sub_process)
         
-        pool.starmap(sub_process, sub_data)
+        
+        # pool.starmap(sub_process, sub_data)
         pool.close()
         pool.join()
 
@@ -120,6 +120,15 @@ def create_attributes_entity():
     del attributes_file["originalTitle"]
     del attributes_file["isAdult"]
     print('Readed basics.tsv')
+    run_sub_process(attributes_file, sub_entity)
+
+def create_attributes_entity_half():
+    attributes_file: DataFrame = pd.read_csv('basics.tsv',sep='\t')
+    del attributes_file["titleType"]
+    del attributes_file["primaryTitle"]
+    del attributes_file["originalTitle"]
+    del attributes_file["isAdult"]
+    print('Readed basics.tsv')
     if HALF == 'first':
         start = 0
         end = len(attributes_file)//4
@@ -135,7 +144,6 @@ def create_attributes_entity():
     print("Running entity",HALF,"half with size:",str(len(attributes_file[start:end])))
     run_sub_process(attributes_file[start:end], sub_entity)
 
-# def sub_region(pid, data):
 def sub_region(dictionary):
     pid = dictionary["id"]
     full = dictionary["data"]
@@ -155,21 +163,20 @@ def sub_region(dictionary):
             relation_region = tt_id + "\t" + relation_id + "\t" + re_id
             add_relation(relation_region)
 
-
-
-        # if not (index % (len(data)//4)):
-        #     print("\t\tActual index in",pid,"is",index)
-        # if tt_id in film_entity:
-        #     if region_id != "\\N" and is_original:
-        #         re_id = add_entity(REGION_PREFIX, region_id)
-        #         relation_region = tt_id + "\t" + relation_id + "\t" + re_id
-        #         add_relation(relation_region)
-            
     print("\tFinished region with pid",pid)
     return "Finished region with pid"+pid
 
-
 def create_region_entity():
+    region_file: DataFrame = pd.read_csv('akas.tsv',sep='\t')
+    del region_file["ordering"]
+    del region_file["title"]
+    del region_file["language"]
+    del region_file["types"]
+    del region_file["attributes"]
+    print('Readed akas.tsv')
+    run_sub_process(region_file, sub_region)
+
+def create_region_entity_half():
     region_file: DataFrame = pd.read_csv('akas.tsv',sep='\t')
     del region_file["ordering"]
     del region_file["title"]
