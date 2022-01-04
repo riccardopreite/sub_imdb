@@ -6,12 +6,13 @@ only_valid_files: list = [f for f in listdir("./") if isfile(join("./", f)) and 
 
 def merge_file(name):
     files: list = [f for f in listdir("./") if isfile(join("./", f)) and name in f]
-    merged: str = ""
+    merged: list = []
     for file in files:
         with open(file, 'r+') as readfile:
-            merged += readfile.read()
+            merged += readfile.readlines()
     output = open("relation_"+name+".txt","w+")
-    output.writelines(merged)
+    out = list(set(merged))
+    output.writelines(out)
 
 merge_file("train")
 merge_file("valid")

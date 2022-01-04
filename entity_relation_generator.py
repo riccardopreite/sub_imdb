@@ -167,13 +167,39 @@ def create_region_entity():
         print("Running region",HALF,"half with size:",str(len(region_file[start:end])))
 
     run_sub_process(region_file[start:end], sub_region)
+film_set = set()
 
+def create_film_entity(path: str):
+    global HALF
+    ttconst = open(path,'r')
+    print('Readed ',path)
+    tt_list: list = ttconst.readlines()
+    print("Running film with size:",str(len(tt_list)))
+    sub_film(1, tt_list)
+
+def sub_film(id, tt_list):
+    print("\tSpawned sub film with id",id)
+    global film_set
+    for url in tt_list:
+        tt_id: str = url.replace("http://www.imdb.com/title/","").replace("/usercomments","")
+
+        if tt_id != "\\N":
+            film_set.update(FILM_PREFIX+tt_id+"\t"+tt_id)
+            #add_entity(FILM_PREFIX, tt_id)
 
 def main():
+    create_film_entity("train/urls_pos.txt")
+    create_film_entity("train/urls_neg.txt")
+    create_film_entity("test/urls_pos.txt")
+    create_film_entity("test/urls_neg.txt")
+    entity = open("entity.txt","r").readlines()
+    entity_film = open("merged_entity.txt","w+")
+    film_set.update(entity)
+    entity_film.writelines(list(film_set))
     global HALF
-    HALF = sys.argv[1]
-    create_attributes_entity()
-    create_region_entity()
+    #HALF = sys.argv[1]
+    #create_attributes_entity()
+    #create_region_entity()
         
 if __name__ == "__main__":
     main()

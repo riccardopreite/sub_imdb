@@ -14,14 +14,14 @@ def read_write(pid, data: list):
     length = len(data)
     print("Started pid",str(pid),"with len",str(length))
     copied = data.copy()
-    valid_size = int(length*0.05)
+    valid_size = int(length*0.25)
     valid_list = []
     list_index = []
 
     for i in range(0,valid_size):
-        if not (i % valid_size//4):
+        if not (i % (valid_size//4)):
             print("\t\tPid",str(pid),"reached",str(i))
-    valid_list.append(copied.pop(random.randrange(len(copied))))
+        valid_list.append(copied.pop(random.randrange(len(copied))))
     print("\tDone sampled",str(len(valid_list)))
     print("\tDone copied",str(len(copied)))
     train = open("relation_train_"+str(pid)+".txt","w+")
@@ -48,4 +48,5 @@ if __name__ == "__main__":
     f = open("relation_new.tsv","r")
     print("Relation opened")
     lines = f.readlines()
+    print("Readed lines")
     run_sub_process(lines, read_write)

@@ -2,10 +2,10 @@ from os import listdir
 from os.path import isfile, join
 
 def print_merged_file(path_list: list, output: str):
-    merged: str = ""
+    merged: list = []
     for path in path_list:
         f = open(path,"r")
-        merged+=f.read()
+        merged+=f.readlines()
     unique = list(set(merged))
     out = open(output,"w+")
     out.writelines(unique)
