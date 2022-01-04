@@ -111,6 +111,7 @@ def sub_entity(dictionary):
             relation_start = tt_id + "\t" + start_relation + "\t" + start_id
             add_relation(relation_start)
     print("\tFinished entity with pid",pid)
+    return "Finished entity with pid"+pid
 
 def create_attributes_entity():
     attributes_file: DataFrame = pd.read_csv('basics.tsv',sep='\t')
@@ -165,6 +166,8 @@ def sub_region(dictionary):
         #         add_relation(relation_region)
             
     print("\tFinished region with pid",pid)
+    return "Finished region with pid"+pid
+
 
 def create_region_entity():
     region_file: DataFrame = pd.read_csv('akas.tsv',sep='\t')
