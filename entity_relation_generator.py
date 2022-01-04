@@ -189,7 +189,7 @@ def create_region_entity():
         print("Running region",HALF,"half with size:",str(len(region_file[start:end])))
 
     run_sub_process(region_file[start:end], sub_region)
-film_set = set()
+film_list = list()
 
 def create_film_entity(path: str):
     global HALF
@@ -200,23 +200,25 @@ def create_film_entity(path: str):
     sub_film(1, tt_list)
 
 def sub_film(id, tt_list):
-    print("\tSpawned sub film with id",id)
+    print("\tSpawned sub film with id",id, "with len",str(len(tt_list)))
     global film_set
     for url in tt_list:
         tt_id: str = url.replace("http://www.imdb.com/title/","").replace("/usercomments","")
 
         if tt_id != "\\N":
-            film_set.update(FILM_PREFIX+tt_id+"\t"+tt_id)
+            entity = (FILM_PREFIX+tt_id+"\t"+tt_id).replace("\n","")
+            film_list.append(entity+"\n")
             #add_entity(FILM_PREFIX, tt_id)
 
 def main():
-    global HALF
+    global HALF, film_entity
     HALF = sys.argv[1] if sys.argv[1] != None else "film"
     if HALF == "film":
         create_film_entity("train/urls_pos.txt")
         create_film_entity("train/urls_neg.txt")
         create_film_entity("test/urls_pos.txt")
         create_film_entity("test/urls_neg.txt")
+        film_set = set(film_list)
         film_entity = open("film_entity.txt","w+")
         film_entity.writelines(film_set)
     else:
