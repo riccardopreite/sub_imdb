@@ -44,9 +44,10 @@ def run_sub_process(data, sub_process):
         pool = mp.Pool(mp.cpu_count())
         global i
         i = 0
+        film_entity = open("film_entity.txt","r").readlines()
         sub_data = [ {"id":get_id(), "data":data[index:index+step_size]} for index in range(0, len(data), step_size) ]
         print("Starting sub process:",sub_process)
-        for result in tqdm(pool.imap(func=sub_process, iterable=sub_data)):
+        for result in tqdm(pool.imap(func=sub_process, iterable=sub_data), total=len(film_entity)):
             pass
         
         
