@@ -61,25 +61,25 @@ def add_entity(prefix, entity_name):
         return unique_code
 
 def add_relation(relation: str):
-     with open("akas_basic_relation_try.tsv","a+") as fd:
+     with open("akas_basic_relation.tsv","a+") as fd:
          fd.write(relation+"\n")
 
 # def sub_entity(pid, data):
 def sub_entity(dictionary):
     pid = dictionary["id"]
     full = dictionary["data"]
-    print("\tSpawned sub entity with pid:",pid,"len:",len(full))
+    #print("\tSpawned sub entity with pid:",pid,"len:",len(full))
     
     gen_relation = relation_code["genres"]
     run_relation = relation_code["runtimeMinutes"]
     start_relation = relation_code["startYear"]
     end_relation = relation_code["endYear"]
 
-    film_entity = open("film_entity.txt","r").readlines()
+    film_entity = open("film_entity.txt","r").read()
     array = [row for index, row in full.iterrows() if row["tconst"] in film_entity]
     data = pd.DataFrame(array)
-
-    print("\tSub entity with pid:",pid,"now has len:",len(data))
+    if len(data) > 0:
+        print("\tSpawned sub entity with pid:",pid,"with len:",len(data))
     for index, row in data.iterrows():
 
         genres_id: str = str(row["genres"])
@@ -146,20 +146,19 @@ def create_attributes_entity_half():
 def sub_region(dictionary):
     pid = dictionary["id"]
     full = dictionary["data"]
-    print("\tSpawned sub region with pid:",pid,"len:",len(full))
+    #print("\tSpawned sub region with pid:",pid,"len:",len(full))
     relation_id: str = relation_code["region"]
 
-    film_entity = open("film_entity.txt","r").readlines()
-    array = [row for index, row in full.iterrows() if row["titleId"] in film_entity]
+    film_entity = open("film_entity.txt","r").read()
+    array = [row for index, row in full.iterrows() if row["titleId"] in film_entity and int(row["isOriginalTitle"]) == 1]
     data = pd.DataFrame(array)
-
-    print("\tSub region with pid:",pid,"now has len:",len(data))
+    if len(data) > 0:
+        print("\tSpawned sub region with pid:",pid,"now has len:",len(data))
 
     for index, row in data.iterrows():
         region_id: str = str(row["region"])
-        is_original: bool = bool(row["isOriginal"])
         tt_id: str = FILM_PREFIX+str(row["titleId"])
-        if region_id != "\\N" and is_original:
+        if region_id != "\\N":
             re_id = add_entity(REGION_PREFIX, region_id)
             relation_region = tt_id + "\t" + relation_id + "\t" + re_id
             add_relation(relation_region)

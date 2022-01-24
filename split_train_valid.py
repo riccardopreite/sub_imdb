@@ -14,7 +14,7 @@ def read_write(pid, data: list):
     length = len(data)
     print("Started pid",str(pid),"with len",str(length))
     copied = data.copy()
-    valid_size = int(length*0.25)
+    valid_size = int(length*0.10)
     valid_list = []
     list_index = []
 
@@ -39,13 +39,13 @@ def run_sub_process(data, sub_process):
     i = 0
     sub_data = [ (get_id(), data[index:index+step_size]) for index in range(0, len(data), step_size) ]
     print("Starting sub process:",sub_process)
-    
-    pool.starmap(sub_process, sub_data)
-    pool.close()
-    pool.join()
+    sub_process(1, data)
+    #pool.starmap(sub_process, sub_data)
+    #pool.close()
+    #pool.join()
 
 if __name__ == "__main__":
-    f = open("relation_new.tsv","r")
+    f = open("akas_basic_relation.tsv","r")
     print("Relation opened")
     lines = f.readlines()
     print("Readed lines")
